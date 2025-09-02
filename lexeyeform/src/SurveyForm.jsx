@@ -64,20 +64,32 @@ const handleSubmit = async (e) => {
   
   try {
     // Create URLSearchParams from the data
-    const formData = new URLSearchParams();
+    const formDataParams = new URLSearchParams();
     for (const key in finalData) {
-      formData.append(key, finalData[key]);
+      if (finalData[key]) {
+        formDataParams.append(key, finalData[key]);
+      }
     }
     
     const response = await fetch('https://script.google.com/macros/s/AKfycbxy_jPdGcmcknxmS9kHt5mcG7BRXdBu2n50iJrF8KyAlsdBq8h8MqS_PGbswjrQmyeGRQ/exec', {
       method: "POST",
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
       },
-      body: formData.toString()
+      body: formDataParams.toString()
     });
     
-    const result = await response.json();
+    // First, get the response as text
+    const responseText = await response.text();
+    
+    // Then try to parse it as JSON
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error("Failed to parse response as JSON:", responseText);
+      throw new Error("Server returned invalid JSON. Response: " + responseText.substring(0, 100));
+    }
     
     if (result.status === "success") {
       setSubmitStatus({ 
