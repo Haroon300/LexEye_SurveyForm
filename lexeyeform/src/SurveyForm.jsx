@@ -47,76 +47,70 @@ const SurveyForm = () => {
   };
 
   // Handle form submission with CORS workaround
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitStatus({ success: false, error: false, message: '' });
-    
-    // Prepare final data (including other text fields if applicable)
-    const finalData = {
-      ...formData,
-      ...(formData.status === 'Other' && { other_status_text: otherStatusText }),
-      ...(formData.legal_issues === 'Other' && { legal_issues_other_text: legalIssuesOtherText })
-    };
-    
-    try {
-      // Use a CORS proxy to avoid CORS issues
-      const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-      const targetUrl = "https://script.google.com/macros/s/AKfycbxy_jPdGcmcknxmS9kHt5mcG7BRXdBu2n50iJrF8KyAlsdBq8h8MqS_PGbswjrQmyeGRQ/exec";
-      
-      // Alternative: Use your own proxy via Vercel serverless function
-      // const targetUrl = '/api/submit-form';
-      
-      const response = await fetch(proxyUrl + targetUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Requested-With": "XMLHttpRequest" // Some CORS proxies require this
-        },
-        body: JSON.stringify(finalData)
-      });
-      
-      const result = await response.json();
-      
-      if (result.status === "success") {
-        setSubmitStatus({ 
-          success: true, 
-          error: false, 
-          message: "🎉 Amazing! Your insights will help us create the legal assistant you actually want to use!" 
-        });
-        
-        // Reset form
-        setFormData({
-          name: '',
-          email: '',
-          age_group: '',
-          gender: '',
-          status: '',
-          department: '',
-          legal_situation: '',
-          legal_issues: '',
-          legal_guidance: '',
-          learning_preference: '',
-          premium_feature: '',
-          biggest_challenge: '',
-          suggestions: ''
-        });
-        setOtherStatusText('');
-        setLegalIssuesOtherText('');
-      } else {
-        throw new Error(result.message || "Submission failed");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      setSubmitStatus({ 
-        success: false, 
-        error: true, 
-        message: `Oops! ${error.message || "Something went wrong. Let's try that again!"}` 
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  // Handle form submission with Vercel serverless function
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+  setSubmitStatus({ success: false, error: false, message: '' });
+  
+  // Prepare final data (including other text fields if applicable)
+  const finalData = {
+    ...formData,
+    ...(formData.status === 'Other' && { other_status_text: otherStatusText }),
+    ...(formData.legal_issues === 'Other' && { legal_issues_other_text: legalIssuesOtherText })
   };
+  
+  try {
+    // Use the Vercel serverless function
+    const response = await fetch('/api/submit-form', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(finalData)
+    });
+    
+    const result = await response.json();
+    
+    if (result.status === "success") {
+      setSubmitStatus({ 
+        success: true, 
+        error: false, 
+        message: "🎉 Amazing! Your insights will help us create the legal assistant you actually want to use!" 
+      });
+      
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        age_group: '',
+        gender: '',
+        status: '',
+        department: '',
+        legal_situation: '',
+        legal_issues: '',
+        legal_guidance: '',
+        learning_preference: '',
+        premium_feature: '',
+        biggest_challenge: '',
+        suggestions: ''
+      });
+      setOtherStatusText('');
+      setLegalIssuesOtherText('');
+    } else {
+      throw new Error(result.message || "Submission failed");
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    setSubmitStatus({ 
+      success: false, 
+      error: true, 
+      message: `Oops! ${error.message || "Something went wrong. Let's try that again!"}` 
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // Progress bar effect
   useEffect(() => {
