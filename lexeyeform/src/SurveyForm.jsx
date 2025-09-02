@@ -47,7 +47,7 @@ const SurveyForm = () => {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitStatus({ success: false, error: false, message: '' });
@@ -59,75 +59,142 @@ const SurveyForm = () => {
       ...(formData.legal_issues === 'Other' && { legal_issues_other_text: legalIssuesOtherText })
     };
     
-    // Create a hidden iframe to handle the form submission
-    const iframe = document.createElement('iframe');
-    iframe.name = 'hiddenFrame';
-    iframe.style.display = 'none';
-    
-    // Create a form element
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = 'https://script.google.com/macros/s/AKfycbxy_jPdGcmcknxmS9kHt5mcG7BRXdBu2n50iJrF8KyAlsdBq8h8MqS_PGbswjrQmyeGRQ/exec';
-    form.target = 'hiddenFrame';
-    form.style.display = 'none';
-    
-    // Add all data as hidden inputs
-    Object.entries(finalData).forEach(([key, value]) => {
-      if (value) {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        input.value = value;
-        form.appendChild(input);
+    try {
+      // Use a CORS proxy service
+      const proxyUrl = 'https://corsproxy.io/?';
+      const scriptUrl = 'https://script.google.com/macros/s/AKfycbzE3J_tuC7tSUxHK7W6l38EWznY-Zn6yb9qui38hOGTIthd9BXugJk2cZgmQvEPYTBTFw/exec';
+      
+      // Create URLSearchParams from the data
+      const formDataParams = new URLSearchParams();
+      for (const key in finalData) {
+        if (finalData[key]) {
+          formDataParams.append(key, finalData[key]);
+        }
       }
-    });
-    
-    // Add iframe and form to document
-    document.body.appendChild(iframe);
-    document.body.appendChild(form);
-    
-    // Handle the iframe load event
-    iframe.onload = () => {
-      // Assume success since we can't easily get response from cross-origin iframe
+      
+      const response = await fetch(proxyUrl + encodeURIComponent(scriptUrl), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formDataParams.toString()
+      });
+      
+      const result = await response.text();
+      
+      // Check if the response indicates success
+      if (response.ok || result.includes('success')) {
+        setSubmitStatus({ 
+          success: true, 
+          error: false, 
+          message: "🎉 Amazing! Your insights will help us create the legal assistant you actually want to use!" 
+        });
+        
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          age_group: '',
+          gender: '',
+          status: '',
+          department: '',
+          legal_situation: '',
+          legal_issues: '',
+          legal_guidance: '',
+          learning_preference: '',
+          premium_feature: '',
+          biggest_challenge: '',
+          suggestions: ''
+        });
+        setOtherStatusText('');
+        setLegalIssuesOtherText('');
+      } else {
+        throw new Error('Submission failed. Please try again.');
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      
+      // Fallback to iframe method if fetch fails
+      submitWithIframe(finalData);
+    } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Fallback method using iframe
+  const submitWithIframe = (finalData) => {
+    try {
+      // Create a hidden iframe
+      const iframe = document.createElement('iframe');
+      iframe.name = 'formSubmissionFrame';
+      iframe.style.display = 'none';
+      
+      // Create a form
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://script.google.com/macros/s/AKfycbxy_jPdGcmcknxmS9kHt5mcG7BRXdBu2n50iJrF8KyAlsdBq8h8MqS_PGbswjrQmyeGRQ/exec';
+      form.target = 'formSubmissionFrame';
+      form.style.display = 'none';
+      
+      // Add all data as hidden inputs
+      Object.entries(finalData).forEach(([key, value]) => {
+        if (value) {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = value;
+          form.appendChild(input);
+        }
+      });
+      
+      // Add to document
+      document.body.appendChild(iframe);
+      document.body.appendChild(form);
+      
+      // Handle load event
+      iframe.onload = () => {
+        setSubmitStatus({ 
+          success: true, 
+          error: false, 
+          message: "🎉 Amazing! Your insights will help us create the legal assistant you actually want to use!" 
+        });
+        
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          age_group: '',
+          gender: '',
+          status: '',
+          department: '',
+          legal_situation: '',
+          legal_issues: '',
+          legal_guidance: '',
+          learning_preference: '',
+          premium_feature: '',
+          biggest_challenge: '',
+          suggestions: ''
+        });
+        setOtherStatusText('');
+        setLegalIssuesOtherText('');
+        
+        // Clean up
+        setTimeout(() => {
+          if (document.body.contains(iframe)) document.body.removeChild(iframe);
+          if (document.body.contains(form)) document.body.removeChild(form);
+        }, 3000);
+      };
+      
+      // Submit form
+      form.submit();
+    } catch (error) {
+      console.error("Iframe submission error:", error);
       setSubmitStatus({ 
-        success: true, 
-        error: false, 
-        message: "🎉 Amazing! Your insights will help us create the legal assistant you actually want to use!" 
+        success: false, 
+        error: true, 
+        message: "Oops! Something went wrong. Please try again later." 
       });
-      
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        age_group: '',
-        gender: '',
-        status: '',
-        department: '',
-        legal_situation: '',
-        legal_issues: '',
-        legal_guidance: '',
-        learning_preference: '',
-        premium_feature: '',
-        biggest_challenge: '',
-        suggestions: ''
-      });
-      setOtherStatusText('');
-      setLegalIssuesOtherText('');
-      
-      // Clean up after a delay
-      setTimeout(() => {
-        if (document.body.contains(iframe)) {
-          document.body.removeChild(iframe);
-        }
-        if (document.body.contains(form)) {
-          document.body.removeChild(form);
-        }
-      }, 3000);
-    };
-    
-    // Submit the form
-    form.submit();
+    }
   };
 
   // Progress bar effect
