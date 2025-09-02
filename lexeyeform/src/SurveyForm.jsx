@@ -1,5 +1,5 @@
-import "./Survey.css";
 import React, { useState, useEffect } from 'react';
+import './Survey.css';
 
 const SurveyForm = () => {
   const [formData, setFormData] = useState({
@@ -46,72 +46,91 @@ const SurveyForm = () => {
     }
   };
 
-  // Handle form submission with CORS workaround
-  // Handle form submission with Vercel serverless function
-// Alternative handleSubmit function using JSONP technique
-
-// Update your handleSubmit function in SurveyForm.jsx
-const handleSubmit = (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  
-  // Prepare final data
-  const finalData = {
-    ...formData,
-    ...(formData.status === 'Other' && { other_status_text: otherStatusText }),
-    ...(formData.legal_issues === 'Other' && { legal_issues_other_text: legalIssuesOtherText })
+  // Handle form submission
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus({ success: false, error: false, message: '' });
+    
+    // Prepare final data
+    const finalData = {
+      ...formData,
+      ...(formData.status === 'Other' && { other_status_text: otherStatusText }),
+      ...(formData.legal_issues === 'Other' && { legal_issues_other_text: legalIssuesOtherText })
+    };
+    
+    // Create a hidden iframe to handle the form submission
+    const iframe = document.createElement('iframe');
+    iframe.name = 'hiddenFrame';
+    iframe.style.display = 'none';
+    
+    // Create a form element
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'https://script.google.com/macros/s/AKfycbxy_jPdGcmcknxmS9kHt5mcG7BRXdBu2n50iJrF8KyAlsdBq8h8MqS_PGbswjrQmyeGRQ/exec';
+    form.target = 'hiddenFrame';
+    form.style.display = 'none';
+    
+    // Add all data as hidden inputs
+    Object.entries(finalData).forEach(([key, value]) => {
+      if (value) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      }
+    });
+    
+    // Add iframe and form to document
+    document.body.appendChild(iframe);
+    document.body.appendChild(form);
+    
+    // Handle the iframe load event
+    iframe.onload = () => {
+      // Assume success since we can't easily get response from cross-origin iframe
+      setIsSubmitting(false);
+      setSubmitStatus({ 
+        success: true, 
+        error: false, 
+        message: "🎉 Amazing! Your insights will help us create the legal assistant you actually want to use!" 
+      });
+      
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        age_group: '',
+        gender: '',
+        status: '',
+        department: '',
+        legal_situation: '',
+        legal_issues: '',
+        legal_guidance: '',
+        learning_preference: '',
+        premium_feature: '',
+        biggest_challenge: '',
+        suggestions: ''
+      });
+      setOtherStatusText('');
+      setLegalIssuesOtherText('');
+      
+      // Clean up after a delay
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+        }
+        if (document.body.contains(form)) {
+          document.body.removeChild(form);
+        }
+      }, 3000);
+    };
+    
+    // Submit the form
+    form.submit();
   };
-  
-  // Create a form
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = 'https://script.google.com/macros/s/AKfycbxy_jPdGcmcknxmS9kHt5mcG7BRXdBu2n50iJrF8KyAlsdBq8h8MqS_PGbswjrQmyeGRQ/exec';
-  
-  // Add all data as hidden inputs
-  Object.entries(finalData).forEach(([key, value]) => {
-    if (value) {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = key;
-      input.value = value;
-      form.appendChild(input);
-    }
-  });
-  
-  // Add form to document and submit
-  document.body.appendChild(form);
-  form.submit();
-  
-  // Show success message (we assume it worked since we can't get a response)
-  setSubmitStatus({ 
-    success: true, 
-    error: false, 
-    message: "🎉 Amazing! Your insights will help us create the legal assistant you actually want to use!" 
-  });
-  
-  // Reset form
-  setFormData({
-    name: '',
-    email: '',
-    age_group: '',
-    gender: '',
-    status: '',
-    department: '',
-    legal_situation: '',
-    legal_issues: '',
-    legal_guidance: '',
-    learning_preference: '',
-    premium_feature: '',
-    biggest_challenge: '',
-    suggestions: ''
-  });
-  setOtherStatusText('');
-  setLegalIssuesOtherText('');
-  
-  setIsSubmitting(false);
-};
 
-// Progress bar effect
+  // Progress bar effect
   useEffect(() => {
     const handleScroll = () => {
       const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
