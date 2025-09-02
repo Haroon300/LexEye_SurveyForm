@@ -49,6 +49,7 @@ const SurveyForm = () => {
   // Handle form submission with CORS workaround
   // Handle form submission with Vercel serverless function
 // Alternative handleSubmit function using JSONP technique
+// Handle form submission with form data
 const handleSubmit = async (e) => {
   e.preventDefault();
   setIsSubmitting(true);
@@ -62,51 +63,50 @@ const handleSubmit = async (e) => {
   };
   
   try {
-    // Create a form and submit it as a workaround for CORS
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = "https://script.google.com/macros/s/AKfycbxy_jPdGcmcknxmS9kHt5mcG7BRXdBu2n50iJrF8KyAlsdBq8h8MqS_PGbswjrQmyeGRQ/exec";
-    form.target = '_blank'; // Open in new window to avoid navigation
+    // Create URLSearchParams from the data
+    const formData = new URLSearchParams();
+    for (const key in finalData) {
+      formData.append(key, finalData[key]);
+    }
     
-    // Add data as hidden inputs
-    Object.entries(finalData).forEach(([key, value]) => {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = key;
-      input.value = value;
-      form.appendChild(input);
+    const response = await fetch('https://script.google.com/macros/s/AKfycbxy_jPdGcmcknxmS9kHt5mcG7BRXdBu2n50iJrF8KyAlsdBq8h8MqS_PGbswjrQmyeGRQ/exec', {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: formData.toString()
     });
     
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
+    const result = await response.json();
     
-    // Assume success since we can't get a response with this method
-    setSubmitStatus({ 
-      success: true, 
-      error: false, 
-      message: "🎉 Amazing! Your insights will help us create the legal assistant you actually want to use!" 
-    });
-    
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      age_group: '',
-      gender: '',
-      status: '',
-      department: '',
-      legal_situation: '',
-      legal_issues: '',
-      legal_guidance: '',
-      learning_preference: '',
-      premium_feature: '',
-      biggest_challenge: '',
-      suggestions: ''
-    });
-    setOtherStatusText('');
-    setLegalIssuesOtherText('');
-    
+    if (result.status === "success") {
+      setSubmitStatus({ 
+        success: true, 
+        error: false, 
+        message: "🎉 Amazing! Your insights will help us create the legal assistant you actually want to use!" 
+      });
+      
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        age_group: '',
+        gender: '',
+        status: '',
+        department: '',
+        legal_situation: '',
+        legal_issues: '',
+        legal_guidance: '',
+        learning_preference: '',
+        premium_feature: '',
+        biggest_challenge: '',
+        suggestions: ''
+      });
+      setOtherStatusText('');
+      setLegalIssuesOtherText('');
+    } else {
+      throw new Error(result.message || "Submission failed");
+    }
   } catch (error) {
     console.error("Error:", error);
     setSubmitStatus({ 
@@ -118,7 +118,6 @@ const handleSubmit = async (e) => {
     setIsSubmitting(false);
   }
 };
-
   // Progress bar effect
   useEffect(() => {
     const handleScroll = () => {
