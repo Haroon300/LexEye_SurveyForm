@@ -48,12 +48,13 @@ const SurveyForm = () => {
 
   // Handle form submission with CORS workaround
   // Handle form submission with Vercel serverless function
+// Alternative handleSubmit function using JSONP technique
 const handleSubmit = async (e) => {
   e.preventDefault();
   setIsSubmitting(true);
   setSubmitStatus({ success: false, error: false, message: '' });
   
-  // Prepare final data (including other text fields if applicable)
+  // Prepare final data
   const finalData = {
     ...formData,
     ...(formData.status === 'Other' && { other_status_text: otherStatusText }),
@@ -61,45 +62,51 @@ const handleSubmit = async (e) => {
   };
   
   try {
-    // Use the Vercel serverless function
-    const response = await fetch('/api/submit-form', {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(finalData)
+    // Create a form and submit it as a workaround for CORS
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = "https://script.google.com/macros/s/AKfycbxy_jPdGcmcknxmS9kHt5mcG7BRXdBu2n50iJrF8KyAlsdBq8h8MqS_PGbswjrQmyeGRQ/exec";
+    form.target = '_blank'; // Open in new window to avoid navigation
+    
+    // Add data as hidden inputs
+    Object.entries(finalData).forEach(([key, value]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = value;
+      form.appendChild(input);
     });
     
-    const result = await response.json();
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
     
-    if (result.status === "success") {
-      setSubmitStatus({ 
-        success: true, 
-        error: false, 
-        message: "🎉 Amazing! Your insights will help us create the legal assistant you actually want to use!" 
-      });
-      
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        age_group: '',
-        gender: '',
-        status: '',
-        department: '',
-        legal_situation: '',
-        legal_issues: '',
-        legal_guidance: '',
-        learning_preference: '',
-        premium_feature: '',
-        biggest_challenge: '',
-        suggestions: ''
-      });
-      setOtherStatusText('');
-      setLegalIssuesOtherText('');
-    } else {
-      throw new Error(result.message || "Submission failed");
-    }
+    // Assume success since we can't get a response with this method
+    setSubmitStatus({ 
+      success: true, 
+      error: false, 
+      message: "🎉 Amazing! Your insights will help us create the legal assistant you actually want to use!" 
+    });
+    
+    // Reset form
+    setFormData({
+      name: '',
+      email: '',
+      age_group: '',
+      gender: '',
+      status: '',
+      department: '',
+      legal_situation: '',
+      legal_issues: '',
+      legal_guidance: '',
+      learning_preference: '',
+      premium_feature: '',
+      biggest_challenge: '',
+      suggestions: ''
+    });
+    setOtherStatusText('');
+    setLegalIssuesOtherText('');
+    
   } catch (error) {
     console.error("Error:", error);
     setSubmitStatus({ 
