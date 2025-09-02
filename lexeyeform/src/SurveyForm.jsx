@@ -51,6 +51,7 @@ const SurveyForm = () => {
 // Alternative handleSubmit function using JSONP technique
 // Handle form submission with form data
 
+// Update your handleSubmit function in SurveyForm.jsx
 const handleSubmit = async (e) => {
   e.preventDefault();
   setIsSubmitting(true);
@@ -64,70 +65,94 @@ const handleSubmit = async (e) => {
   };
   
   try {
-    // Create a hidden form and submit it
+    // Create a hidden iframe to handle the form submission
+    const iframe = document.createElement('iframe');
+    iframe.name = 'formTarget';
+    iframe.style.display = 'none';
+    
+    // Create a form element
     const form = document.createElement('form');
-    form.style.display = 'none';
     form.method = 'POST';
     form.action = 'https://script.google.com/macros/s/AKfycbxy_jPdGcmcknxmS9kHt5mcG7BRXdBu2n50iJrF8KyAlsdBq8h8MqS_PGbswjrQmyeGRQ/exec';
-    form.target = 'hiddenFrame';
+    form.target = 'formTarget';
+    form.style.display = 'none';
     
     // Add all data as hidden inputs
     Object.entries(finalData).forEach(([key, value]) => {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = key;
-      input.value = value;
-      form.appendChild(input);
+      if (value) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      }
     });
     
-    // Create a hidden iframe to handle the response
-    const iframe = document.createElement('iframe');
-    iframe.name = 'hiddenFrame';
-    iframe.style.display = 'none';
-    iframe.onload = () => {
-      setIsSubmitting(false);
-      setSubmitStatus({ 
-        success: true, 
-        error: false, 
-        message: "🎉 Amazing! Your insights will help us create the legal assistant you actually want to use!" 
-      });
-      
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        age_group: '',
-        gender: '',
-        status: '',
-        department: '',
-        legal_situation: '',
-        legal_issues: '',
-        legal_guidance: '',
-        learning_preference: '',
-        premium_feature: '',
-        biggest_challenge: '',
-        suggestions: ''
-      });
-      setOtherStatusText('');
-      setLegalIssuesOtherText('');
-      
-      // Clean up
-      document.body.removeChild(form);
-      document.body.removeChild(iframe);
-    };
-    
+    // Add iframe and form to document
     document.body.appendChild(iframe);
     document.body.appendChild(form);
+    
+    // Create a promise to handle the iframe load event
+    const submissionPromise = new Promise((resolve, reject) => {
+      iframe.onload = () => {
+        // Give the server a moment to process
+        setTimeout(() => {
+          resolve('success');
+          // Clean up
+          document.body.removeChild(iframe);
+          document.body.removeChild(form);
+        }, 2000);
+      };
+      
+      iframe.onerror = () => {
+        reject(new Error('Form submission failed'));
+        // Clean up
+        document.body.removeChild(iframe);
+        document.body.removeChild(form);
+      };
+    });
+    
+    // Submit the form
     form.submit();
+    
+    // Wait for the iframe to load (indicating submission is complete)
+    await submissionPromise;
+    
+    // If we get here, the submission was successful
+    setSubmitStatus({ 
+      success: true, 
+      error: false, 
+      message: "🎉 Amazing! Your insights will help us create the legal assistant you actually want to use!" 
+    });
+    
+    // Reset form
+    setFormData({
+      name: '',
+      email: '',
+      age_group: '',
+      gender: '',
+      status: '',
+      department: '',
+      legal_situation: '',
+      legal_issues: '',
+      legal_guidance: '',
+      learning_preference: '',
+      premium_feature: '',
+      biggest_challenge: '',
+      suggestions: ''
+    });
+    setOtherStatusText('');
+    setLegalIssuesOtherText('');
     
   } catch (error) {
     console.error("Error:", error);
-    setIsSubmitting(false);
     setSubmitStatus({ 
       success: false, 
       error: true, 
       message: `Oops! ${error.message || "Something went wrong. Let's try that again!"}` 
     });
+  } finally {
+    setIsSubmitting(false);
   }
 };
 
