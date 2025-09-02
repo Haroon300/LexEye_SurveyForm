@@ -46,7 +46,7 @@ const SurveyForm = () => {
     }
   };
 
-  // Handle form submission
+  // Handle form submission with CORS workaround
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -60,12 +60,18 @@ const SurveyForm = () => {
     };
     
     try {
-      const scriptURL = "https://script.google.com/macros/s/AKfycbxy_jPdGcmcknxmS9kHt5mcG7BRXdBu2n50iJrF8KyAlsdBq8h8MqS_PGbswjrQmyeGRQ/exec";
+      // Use a CORS proxy to avoid CORS issues
+      const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+      const targetUrl = "https://script.google.com/macros/s/AKfycbxy_jPdGcmcknxmS9kHt5mcG7BRXdBu2n50iJrF8KyAlsdBq8h8MqS_PGbswjrQmyeGRQ/exec";
       
-      const response = await fetch(scriptURL, {
+      // Alternative: Use your own proxy via Vercel serverless function
+      // const targetUrl = '/api/submit-form';
+      
+      const response = await fetch(proxyUrl + targetUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest" // Some CORS proxies require this
         },
         body: JSON.stringify(finalData)
       });
