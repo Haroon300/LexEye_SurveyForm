@@ -50,6 +50,7 @@ const SurveyForm = () => {
   // Handle form submission with Vercel serverless function
 // Alternative handleSubmit function using JSONP technique
 // Handle form submission with form data
+
 const handleSubmit = async (e) => {
   e.preventDefault();
   setIsSubmitting(true);
@@ -63,18 +64,28 @@ const handleSubmit = async (e) => {
   };
   
   try {
-    // Use the Vercel serverless function
-    const response = await fetch('/api/submit-form', {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(finalData)
+    // Create a hidden form and submit it
+    const form = document.createElement('form');
+    form.style.display = 'none';
+    form.method = 'POST';
+    form.action = 'https://script.google.com/macros/s/AKfycbxy_jPdGcmcknxmS9kHt5mcG7BRXdBu2n50iJrF8KyAlsdBq8h8MqS_PGbswjrQmyeGRQ/exec';
+    form.target = 'hiddenFrame';
+    
+    // Add all data as hidden inputs
+    Object.entries(finalData).forEach(([key, value]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = value;
+      form.appendChild(input);
     });
     
-    const result = await response.json();
-    
-    if (result.status === "success") {
+    // Create a hidden iframe to handle the response
+    const iframe = document.createElement('iframe');
+    iframe.name = 'hiddenFrame';
+    iframe.style.display = 'none';
+    iframe.onload = () => {
+      setIsSubmitting(false);
       setSubmitStatus({ 
         success: true, 
         error: false, 
@@ -99,21 +110,28 @@ const handleSubmit = async (e) => {
       });
       setOtherStatusText('');
       setLegalIssuesOtherText('');
-    } else {
-      throw new Error(result.message || "Submission failed");
-    }
+      
+      // Clean up
+      document.body.removeChild(form);
+      document.body.removeChild(iframe);
+    };
+    
+    document.body.appendChild(iframe);
+    document.body.appendChild(form);
+    form.submit();
+    
   } catch (error) {
     console.error("Error:", error);
+    setIsSubmitting(false);
     setSubmitStatus({ 
       success: false, 
       error: true, 
       message: `Oops! ${error.message || "Something went wrong. Let's try that again!"}` 
     });
-  } finally {
-    setIsSubmitting(false);
   }
 };
-  // Progress bar effect
+
+// Progress bar effect
   useEffect(() => {
     const handleScroll = () => {
       const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
