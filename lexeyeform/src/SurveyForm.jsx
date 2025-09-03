@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import './Survey.css';
 
 const SurveyForm = () => {
@@ -62,7 +63,7 @@ const SurveyForm = () => {
     try {
       // Use a CORS proxy service
       const proxyUrl = 'https://corsproxy.io/?';
-      const scriptUrl = 'https://script.google.com/macros/s/AKfycbzE3J_tuC7tSUxHK7W6l38EWznY-Zn6yb9qui38hOGTIthd9BXugJk2cZgmQvEPYTBTFw/exec';
+      const scriptUrl = 'https://script.google.com/macros/s/AKfycbyWSKENmRxPBrpKLNJfuR6TwAdXlHktV22P4Bih2ICtd604MbOI0ga9YYyPT3v8qeAYWg/exec';
       
       // Create URLSearchParams from the data
       const formDataParams = new URLSearchParams();
@@ -132,7 +133,7 @@ const SurveyForm = () => {
       // Create a form
       const form = document.createElement('form');
       form.method = 'POST';
-      form.action = 'https://script.google.com/macros/s/AKfycbxy_jPdGcmcknxmS9kHt5mcG7BRXdBu2n50iJrF8KyAlsdBq8h8MqS_PGbswjrQmyeGRQ/exec';
+      form.action = 'https://script.google.com/macros/s/AKfycbyWSKENmRxPBrpKLNJfuR6TwAdXlHktV22P4Bih2ICtd604MbOI0ga9YYyPT3v8qeAYWg/exec';
       form.target = 'formSubmissionFrame';
       form.style.display = 'none';
       
@@ -196,6 +197,12 @@ const SurveyForm = () => {
       });
     }
   };
+
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+  //   console.log("Form submitted:", formData);
+  // }
+
 
   // Progress bar effect
   useEffect(() => {
