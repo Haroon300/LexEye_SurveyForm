@@ -25,7 +25,7 @@ const SurveyForm = () => {
   const [submitStatus, setSubmitStatus] = useState({ success: false, error: false, message: '' });
 
   // Your Google Apps Script Web App URL (replace with your actual deployed URL)
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby1HfjAaeC7azCJ0N9tqSqHgj-ethoK3bDtmPsVbBJ7CFGGAPo6PtyorjnOFNCFQ-94Qg/exec';
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbGH95W-0H4LO5sA7DQISr2SlrgrF1m5mtgXlKzEvVZ4rRVYjXPoANvGmpfBSSy6ObTA/exec';
 
   // Handle input changes
   const handleInputChange = (e) => {
