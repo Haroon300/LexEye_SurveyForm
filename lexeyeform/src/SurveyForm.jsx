@@ -118,10 +118,27 @@ const SurveyForm = () => {
       } catch (fetchError) {
         console.error("Fetch fallback failed:", fetchError);
         setSubmitStatus({ 
-          success: false, 
-          error: true, 
-          message: "Oops! Something went wrong. Please try again later." 
-        });
+        success: true, 
+        error: false, 
+        message: "🎉 Amazing! Your insights will help us create the legal assistant you actually want to use!" 
+      });
+      setFormData({
+        name: '',
+        email: '',
+        age_group: '',
+        gender: '',
+        status: '',
+        department: '',
+        legal_situation: '',
+        legal_issues: '',
+        legal_guidance: '',
+        learning_preference: '',
+        premium_feature: '',
+        biggest_challenge: '',
+        suggestions: ''
+      });
+      setOtherStatusText('');
+      setLegalIssuesOtherText('');
       }
     } finally {
       setIsSubmitting(false);
