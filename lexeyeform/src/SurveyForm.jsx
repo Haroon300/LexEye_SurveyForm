@@ -24,6 +24,9 @@ const SurveyForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState({ success: false, error: false, message: '' });
 
+  // Your Google Apps Script Web App URL (replace with your actual deployed URL)
+  const SCRIPT_URL = 'https://docs.google.com/spreadsheets/d/1ymGm1G5MK1WovZPIj0FwCulRIpnlhX1hgJAS2uUpVJQ/edit?usp=sharing';
+
   // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -47,7 +50,7 @@ const SurveyForm = () => {
     }
   };
 
-  // Handle form submission
+  // Handle form submission with Axios
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -61,30 +64,24 @@ const SurveyForm = () => {
     };
     
     try {
-      // Use a CORS proxy service
-      const proxyUrl = 'https://corsproxy.io/?';
-      const scriptUrl = 'https://script.google.com/macros/s/AKfycbyWSKENmRxPBrpKLNJfuR6TwAdXlHktV22P4Bih2ICtd604MbOI0ga9YYyPT3v8qeAYWg/exec';
-      
-      // Create URLSearchParams from the data
-      const formDataParams = new URLSearchParams();
-      for (const key in finalData) {
-        if (finalData[key]) {
-          formDataParams.append(key, finalData[key]);
-        }
-      }
-      
-      const response = await fetch(proxyUrl + encodeURIComponent(scriptUrl), {
-        method: 'POST',
+      // Send data using Axios
+      const response = await axios.post(SCRIPT_URL, finalData, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: formDataParams.toString()
+        // Axios automatically handles URL encoding
+        transformRequest: [(data) => {
+          const formData = new URLSearchParams();
+          for (const key in data) {
+            if (data[key]) {
+              formData.append(key, data[key]);
+            }
+          }
+          return formData.toString();
+        }]
       });
-      
-      const result = await response.text();
-      
-      // Check if the response indicates success
-      if (response.ok || result.includes('success')) {
+
+      if (response.data.status === "success") {
         setSubmitStatus({ 
           success: true, 
           error: false, 
@@ -110,99 +107,75 @@ const SurveyForm = () => {
         setOtherStatusText('');
         setLegalIssuesOtherText('');
       } else {
-        throw new Error('Submission failed. Please try again.');
+        throw new Error(response.data.message || 'Submission failed');
       }
     } catch (error) {
       console.error("Error:", error);
       
-      // Fallback to iframe method if fetch fails
-      submitWithIframe(finalData);
+      // Fallback to fetch if Axios fails
+      try {
+        await submitWithFetch(finalData);
+      } catch (fetchError) {
+        console.error("Fetch fallback failed:", fetchError);
+        setSubmitStatus({ 
+          success: false, 
+          error: true, 
+          message: "Oops! Something went wrong. Please try again later." 
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Fallback method using iframe
-  const submitWithIframe = (finalData) => {
-    try {
-      // Create a hidden iframe
-      const iframe = document.createElement('iframe');
-      iframe.name = 'formSubmissionFrame';
-      iframe.style.display = 'none';
-      
-      // Create a form
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = 'https://script.google.com/macros/s/AKfycbyWSKENmRxPBrpKLNJfuR6TwAdXlHktV22P4Bih2ICtd604MbOI0ga9YYyPT3v8qeAYWg/exec';
-      form.target = 'formSubmissionFrame';
-      form.style.display = 'none';
-      
-      // Add all data as hidden inputs
-      Object.entries(finalData).forEach(([key, value]) => {
-        if (value) {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = key;
-          input.value = value;
-          form.appendChild(input);
-        }
-      });
-      
-      // Add to document
-      document.body.appendChild(iframe);
-      document.body.appendChild(form);
-      
-      // Handle load event
-      iframe.onload = () => {
-        setSubmitStatus({ 
-          success: true, 
-          error: false, 
-          message: "🎉 Amazing! Your insights will help us create the legal assistant you actually want to use!" 
-        });
-        
-        // Reset form
-        setFormData({
-          name: '',
-          email: '',
-          age_group: '',
-          gender: '',
-          status: '',
-          department: '',
-          legal_situation: '',
-          legal_issues: '',
-          legal_guidance: '',
-          learning_preference: '',
-          premium_feature: '',
-          biggest_challenge: '',
-          suggestions: ''
-        });
-        setOtherStatusText('');
-        setLegalIssuesOtherText('');
-        
-        // Clean up
-        setTimeout(() => {
-          if (document.body.contains(iframe)) document.body.removeChild(iframe);
-          if (document.body.contains(form)) document.body.removeChild(form);
-        }, 3000);
-      };
-      
-      // Submit form
-      form.submit();
-    } catch (error) {
-      console.error("Iframe submission error:", error);
+  // Fallback method using fetch
+  const submitWithFetch = async (finalData) => {
+    const formData = new URLSearchParams();
+    for (const key in finalData) {
+      if (finalData[key]) {
+        formData.append(key, finalData[key]);
+      }
+    }
+
+    const response = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData.toString()
+    });
+
+    const result = await response.json();
+
+    if (result.status === "success") {
       setSubmitStatus({ 
-        success: false, 
-        error: true, 
-        message: "Oops! Something went wrong. Please try again later." 
+        success: true, 
+        error: false, 
+        message: "🎉 Amazing! Your insights will help us create the legal assistant you actually want to use!" 
       });
+      
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        age_group: '',
+        gender: '',
+        status: '',
+        department: '',
+        legal_situation: '',
+        legal_issues: '',
+        legal_guidance: '',
+        learning_preference: '',
+        premium_feature: '',
+        biggest_challenge: '',
+        suggestions: ''
+      });
+      setOtherStatusText('');
+      setLegalIssuesOtherText('');
+    } else {
+      throw new Error(result.message || 'Submission failed');
     }
   };
-
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-  //   console.log("Form submitted:", formData);
-  // }
-
 
   // Progress bar effect
   useEffect(() => {
