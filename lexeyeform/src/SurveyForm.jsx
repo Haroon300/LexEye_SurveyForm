@@ -229,10 +229,9 @@ const SurveyForm = () => {
         <div className="hero">
           <div className="hero-content">
             <h1>LexEye</h1>
-            <p className="subtitle">Your Legal Rights, Simplified</p>
+            <p className="subtitle"><h4>Welcome to LexEye! 🚀 We’re building a simple, affordable way to understand your legal rights — whether it’s dealing with harassment, police stops, workplace issues, or landlord disputes. Your feedback will help us make legal guidance easier, faster, and accessible for everyone. Take a few minutes to share your thoughts — we’d love to hear from you!</h4></p>
             <p className="tagline">"Know Your Rights, Own Your Power"</p>
             <a href="#survey" className="cta-button">Help Us Build Something Amazing</a>
-          <h4>Welcome to LexEye! 🚀 We’re building a simple, affordable way to understand your legal rights—whether it’s dealing with harassment, police stops, workplace issues, or landlord disputes. Your feedback will help us make legal guidance easier, faster, and accessible for everyone. Take a few minutes to share your thoughts—we’d love to hear from you!</h4>
           </div>
         </div>
         
